@@ -1,122 +1,197 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { en } from "./locales/en";
+import "./App.css";
+
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [identifier, setIdentifier] = useState("");
+  const [assets, setAssets] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorCode, setErrorCode] = useState(null);
+
+  const text = en;
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const cleanIdentifier = identifier.trim();
+
+    if (!cleanIdentifier || isLoading) {
+      return;
+    }
+
+    if (assets.length >= text.assetInput.maximum) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorCode(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/resolve/${encodeURIComponent(
+          cleanIdentifier
+        )}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.status !== "resolved") {
+        setErrorCode(data.code || "INTERNAL_ERROR");
+        return;
+      }
+
+      const alreadyAdded = assets.some(
+        (asset) => asset.wkn === data.asset.wkn
+      );
+
+      if (!alreadyAdded) {
+        setAssets((currentAssets) => [
+          ...currentAssets,
+          data.asset,
+        ]);
+      }
+
+      setIdentifier("");
+    } catch {
+      setErrorCode("INTERNAL_ERROR");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function removeAsset(wkn) {
+    setAssets((currentAssets) =>
+      currentAssets.filter((asset) => asset.wkn !== wkn)
+    );
+  }
+
+  const errorText = errorCode
+    ? text.errors[errorCode] || text.errors.INTERNAL_ERROR
+    : null;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+    <div className="app-shell">
+      <header className="header">
+        <a className="brand" href="/">
+          <span className="brand-mark">M</span>
+          {text.app.name}
+        </a>
+
+        <nav className="navigation">
+          <a className="active" href="#optimize">
+            {text.app.navigation.optimize}
+          </a>
+          <a href="#learn">{text.app.navigation.learn}</a>
+          <a href="#about">{text.app.navigation.about}</a>
+        </nav>
+      </header>
+
+      <main>
+        <section className="hero" id="optimize">
+          <p className="eyebrow">{text.hero.eyebrow}</p>
+
+          <h1>{text.hero.title}</h1>
+
+          <p className="hero-description">
+            {text.hero.description}
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </section>
 
-      <div className="ticks"></div>
+        <section className="workspace">
+          <div className="workspace-header">
+            <div>
+              <p className="section-label">
+                {text.assetInput.label}
+              </p>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+              <p className="asset-counter">
+                {assets.length} / {text.assetInput.maximum}{" "}
+                {text.assetInput.counter}
+              </p>
+            </div>
+          </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          <form
+            className="asset-form"
+            onSubmit={handleSubmit}
+          >
+            <input
+              value={identifier}
+              onChange={(event) =>
+                setIdentifier(event.target.value)
+              }
+              placeholder={text.assetInput.placeholder}
+              aria-label={text.assetInput.label}
+              disabled={isLoading}
+            />
+
+            <button
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? "Looking up..." : text.assetInput.button}
+            </button>
+          </form>
+
+          {errorText && (
+            <div className="error-message" role="alert">
+              <strong>{errorText.title}</strong>
+              <p>{errorText.message}</p>
+            </div>
+          )}
+
+          {assets.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">↗</div>
+
+              <h2>{text.emptyState.title}</h2>
+
+              <p>{text.emptyState.description}</p>
+            </div>
+          ) : (
+            <div className="asset-list">
+              {assets.map((asset) => (
+                <div
+                  className="asset-row"
+                  key={asset.wkn}
+                >
+                  <div>
+                    <strong>{asset.name}</strong>
+
+                    <p>
+                      WKN {asset.wkn} · {asset.yahoo_symbol}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeAsset(asset.wkn)}
+                    aria-label={`Remove ${asset.name}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            className="optimize-button"
+            type="button"
+            disabled={assets.length < 2}
+          >
+            {text.actions.optimize}
+          </button>
+        </section>
+      </main>
+
+      <footer>
+        {text.footer.disclaimer}
+      </footer>
+    </div>
+  );
 }
 
-export default App
+export default App;
