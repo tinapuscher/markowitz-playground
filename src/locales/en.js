@@ -15,6 +15,12 @@ export const en = {
       "Select real market instruments and explore how Modern Portfolio Theory combines them based on return, risk and correlation.",
   },
 
+  samples: {
+  title: "Sample assets for exploration",
+  description:
+    "This sample selection includes commonly used instruments representing markets and asset classes often found in investment portfolios. It is provided solely to explore how the Markowitz model works and does not represent a recommended portfolio or investment advice.",
+  },
+
   assetInput: {
   label: "Add an asset",
   placeholder: "Enter WKN or ISIN",
@@ -22,7 +28,7 @@ export const en = {
   loading: "Looking up...",
   counter: "assets",
   maximum: 20,
-},
+  },
 
   emptyState: {
     title: "Start with your first asset",

@@ -3,10 +3,78 @@ import { en } from "./locales/en";
 import "./App.css";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+const MAX_ASSETS = 20;
+
+const SAMPLE_ASSETS = [
+  {
+    name: "iShares Core MSCI World UCITS ETF USD (Acc)",
+    exposure: "MSCI World",
+    type: "ETF",
+    wkn: "A0RPWH",
+    isin: "IE00B4L5Y983",
+    isSample: true,
+  },
+  {
+    name: "iShares Nasdaq 100 UCITS ETF (Acc)",
+    exposure: "NASDAQ-100",
+    type: "ETF",
+    wkn: "A0YEDL",
+    isin: "IE00B53SZB19",
+    isSample: true,
+  },
+  {
+    name: "iShares Core DAX UCITS ETF (DE) EUR (Acc)",
+    exposure: "DAX",
+    type: "ETF",
+    wkn: "593393",
+    isin: "DE0005933931",
+    isSample: true,
+  },
+  {
+    name: "iShares Core MSCI Emerging Markets IMI UCITS ETF (Acc)",
+    exposure: "Emerging Markets",
+    type: "ETF",
+    wkn: "A111X9",
+    isin: "IE00BKM4GZ66",
+    isSample: true,
+  },
+  {
+    name: "iShares MSCI World Small Cap UCITS ETF",
+    exposure: "World Small Cap",
+    type: "ETF",
+    wkn: "A2DWBY",
+    isin: "IE00BF4RFH31",
+    isSample: true,
+  },
+  {
+    name: "iShares Euro Government Bond 5-7yr UCITS ETF",
+    exposure: "Euro Government Bonds",
+    type: "ETF",
+    wkn: "A0YBRY",
+    isin: "DE000A0YBRY0",
+    isSample: true,
+  },
+  {
+    name: "Xetra-Gold",
+    exposure: "Gold",
+    type: "ETC",
+    wkn: "A0S9GB",
+    isin: "DE000A0S9GB0",
+    isSample: true,
+  },
+  {
+    name: "Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C",
+    exposure: "EUR Overnight / Money Market",
+    type: "ETF",
+    wkn: "DBX0AN",
+    isin: "LU0290358497",
+    isSample: true,
+  },
+];
 
 function App() {
   const [identifier, setIdentifier] = useState("");
-  const [assets, setAssets] = useState([]);
+  const [assets, setAssets] = useState(SAMPLE_ASSETS);
   const [isLoading, setIsLoading] = useState(false);
   const [errorCode, setErrorCode] = useState(null);
 
@@ -21,7 +89,7 @@ function App() {
       return;
     }
 
-    if (assets.length >= text.assetInput.maximum) {
+    if (assets.length >= MAX_ASSETS) {
       return;
     }
 
@@ -30,9 +98,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/resolve/${encodeURIComponent(
-          cleanIdentifier
-        )}`
+        `${API_BASE_URL}/api/resolve/${encodeURIComponent(cleanIdentifier)}`
       );
 
       const data = await response.json();
@@ -43,13 +109,20 @@ function App() {
       }
 
       const alreadyAdded = assets.some(
-        (asset) => asset.wkn === data.asset.wkn
+        (asset) =>
+          asset.wkn === data.asset.wkn ||
+          (asset.isin &&
+            data.asset.isin &&
+            asset.isin === data.asset.isin)
       );
 
       if (!alreadyAdded) {
         setAssets((currentAssets) => [
           ...currentAssets,
-          data.asset,
+          {
+            ...data.asset,
+            isSample: false,
+          },
         ]);
       }
 
@@ -99,92 +172,109 @@ function App() {
           </p>
         </section>
 
-        <section className="workspace">
-          <div className="workspace-header">
-            <div>
-              <p className="section-label">
-                {text.assetInput.label}
-              </p>
+       <section className="workspace">
+        <div className="workspace-header">
+          <p className="section-label">{text.assetInput.label}</p>
 
-              <p className="asset-counter">
-                {assets.length} / {text.assetInput.maximum}{" "}
-                {text.assetInput.counter}
-              </p>
-            </div>
+          <p className="asset-counter">
+            {assets.length} / {MAX_ASSETS} assets
+          </p>
+        </div>
+
+        <button
+          className="optimize-button"
+          type="button"
+          disabled={assets.length < 2}
+        >
+          {text.actions.optimize}
+        </button>
+
+        {assets.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">↗</div>
+            <h2>{text.emptyState.title}</h2>
+            <p>{text.emptyState.description}</p>
           </div>
+        ) : (
+          <div className="asset-list">
+            {assets.map((asset) => (
+              <div
+                className="asset-row"
+                key={asset.wkn}
+              >
+                <div className="asset-main">
+                  <div className="asset-heading">
+                    <strong>{asset.exposure || asset.name}</strong>
 
-          <form
-            className="asset-form"
-            onSubmit={handleSubmit}
-          >
-            <input
-              value={identifier}
-              onChange={(event) =>
-                setIdentifier(event.target.value)
-              }
-              placeholder={text.assetInput.placeholder}
-              aria-label={text.assetInput.label}
-              disabled={isLoading}
-            />
-
-            <button
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? "Looking up..." : text.assetInput.button}
-            </button>
-          </form>
-
-          {errorText && (
-            <div className="error-message" role="alert">
-              <strong>{errorText.title}</strong>
-              <p>{errorText.message}</p>
-            </div>
-          )}
-
-          {assets.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">↗</div>
-
-              <h2>{text.emptyState.title}</h2>
-
-              <p>{text.emptyState.description}</p>
-            </div>
-          ) : (
-            <div className="asset-list">
-              {assets.map((asset) => (
-                <div
-                  className="asset-row"
-                  key={asset.wkn}
-                >
-                  <div>
-                    <strong>{asset.name}</strong>
-
-                    <p>
-                      WKN {asset.wkn} · {asset.yahoo_symbol}
-                    </p>
+                    <span className="asset-type">
+                      {asset.type || "ETF"}
+                    </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => removeAsset(asset.wkn)}
-                    aria-label={`Remove ${asset.name}`}
-                  >
-                    ×
-                  </button>
+                  {asset.exposure && (
+                    <p className="asset-name">
+                      {asset.name}
+                    </p>
+                  )}
+
+                  <p className="asset-identifiers">
+                    WKN {asset.wkn}
+                    {asset.isin && ` · ISIN ${asset.isin}`}
+                    {!asset.isin &&
+                      asset.yahoo_symbol &&
+                      ` · ${asset.yahoo_symbol}`}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
+
+                <button
+                  className="remove-asset"
+                  type="button"
+                  onClick={() => removeAsset(asset.wkn)}
+                  aria-label={`Remove ${asset.name}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form
+          className="asset-form"
+          onSubmit={handleSubmit}
+        >
+          <input
+            value={identifier}
+            onChange={(event) =>
+              setIdentifier(event.target.value)
+            }
+            placeholder={text.assetInput.placeholder}
+            aria-label={text.assetInput.label}
+            disabled={isLoading}
+          />
 
           <button
-            className="optimize-button"
-            type="button"
-            disabled={assets.length < 2}
+            type="submit"
+            disabled={isLoading}
           >
-            {text.actions.optimize}
+            {isLoading
+              ? text.assetInput.loading
+              : text.assetInput.button}
           </button>
-        </section>
+        </form>
+
+        <div className="sample-note">
+          <strong>{text.samples.title}</strong>
+          <p>{text.samples.description}</p>
+        </div>
+
+        {errorText && (
+          <div className="error-message" role="alert">
+            <strong>{errorText.title}</strong>
+            <p>{errorText.message}</p>
+          </div>
+        )}
+      </section>
       </main>
 
       <footer>
