@@ -68,10 +68,13 @@ def _max_sharpe(mu: np.ndarray, cov: np.ndarray, risk_free: float) -> np.ndarray
         method="SLSQP",
         bounds=bounds,
         constraints=constraints,
-        options={"maxiter": 500, "ftol": 1e-12},
+        options={"maxiter": 500, "ftol": 1e-9},
     )
     if not result.success:
-        raise ValueError("Optimierung konnte nicht konvergieren.")
+        raise ValueError(
+            f"Optimierung konnte nicht konvergieren: "
+            f"{result.message}"
+        )
     return result.x
 
 
