@@ -77,6 +77,8 @@ function App() {
   const [assets, setAssets] = useState(SAMPLE_ASSETS);
   const [isLoading, setIsLoading] = useState(false);
   const [errorCode, setErrorCode] = useState(null);
+  const [optimizationResult, setOptimizationResult] = useState(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const text = en;
 
@@ -134,6 +136,44 @@ function App() {
     }
   }
 
+  async function handleOptimize() {
+  if (assets.length < 2 || isOptimizing) {
+    return;
+  }
+
+  setIsOptimizing(true);
+  setOptimizationResult(null);
+  setErrorCode(null);
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/optimize/sample`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          wkns: assets.map((asset) => asset.wkn),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.status !== "ok") {
+      setErrorCode(data.code || "OPTIMIZATION_FAILED");
+      return;
+    }
+
+    setOptimizationResult(data.result);
+  } catch {
+    setErrorCode("OPTIMIZATION_FAILED");
+  } finally {
+    setIsOptimizing(false);
+  }
+}
+
   function removeAsset(wkn) {
     setAssets((currentAssets) =>
       currentAssets.filter((asset) => asset.wkn !== wkn)
@@ -181,13 +221,54 @@ function App() {
           </p>
         </div>
 
-        <button
+       <button
           className="optimize-button"
           type="button"
-          disabled={assets.length < 2}
+          onClick={handleOptimize}
+          disabled={assets.length < 2 || isOptimizing}
         >
-          {text.actions.optimize}
+          {isOptimizing
+            ? "Running model..."
+            : text.actions.optimize}
         </button>
+
+      {optimizationResult && (
+        <section className="optimization-summary">
+          <div className="results-header">
+            <div>
+              <p className="section-label">MODEL RESULT</p>
+              <h2>Markowitz model result</h2>
+            </div>
+
+            <p className="results-note">
+              Based on the selected assets and the current model assumptions.
+            </p>
+          </div>
+
+          <div className="metric-grid">
+            <div className="metric-card">
+              <span>Expected return</span>
+              <strong>
+                {optimizationResult.expected_return.toFixed(2)}%
+              </strong>
+            </div>
+
+            <div className="metric-card">
+              <span>Volatility</span>
+              <strong>
+                {optimizationResult.volatility.toFixed(2)}%
+              </strong>
+            </div>
+
+            <div className="metric-card">
+              <span>Sharpe ratio</span>
+              <strong>
+                {optimizationResult.sharpe_ratio.toFixed(3)}
+              </strong>
+            </div>
+          </div>
+        </section>
+      )}
 
         {assets.length === 0 ? (
           <div className="empty-state">
@@ -209,6 +290,25 @@ function App() {
                     <span className="asset-type">
                       {asset.type || "ETF"}
                     </span>
+
+                    {optimizationResult && (() => {
+                      const resultIndex =
+                        optimizationResult.tickers.indexOf(asset.wkn);
+
+                      if (resultIndex === -1) {
+                        return null;
+                      }
+
+                      const weight =
+                        optimizationResult.weights[resultIndex] * 100;
+
+                      return (
+                        <div className="asset-allocation">
+                          <span>MODEL ALLOCATION</span>
+                          <strong>{weight.toFixed(2)}%</strong>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {asset.exposure && (
