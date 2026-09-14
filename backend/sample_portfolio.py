@@ -1,4 +1,4 @@
-"""Optimization of cached sample assets."""
+"""Optimization of the cached sample portfolio."""
 
 from pathlib import Path
 
@@ -32,10 +32,7 @@ def _load_sample_prices(
 ) -> pd.DataFrame:
     series = []
 
-    for wkn, _name in SAMPLE_ASSETS:
-        if wkn not in selected_wkns:
-            continue
-
+    for wkn in selected_wkns:
         file_path = DATA_DIR / f"{wkn}.csv"
 
         frame = pd.read_csv(
@@ -51,11 +48,6 @@ def _load_sample_prices(
 
         series.append(price_series)
 
-    if len(series) < 2:
-        raise ValueError(
-            "At least two cached sample assets are required."
-        )
-
     return pd.concat(
         series,
         axis=1,
@@ -67,23 +59,10 @@ def optimize_sample_portfolio(
     selected_wkns: list[str],
     risk_free_rate: float = 0.02,
 ) -> OptimizationResult:
-    available_wkns = {
-        wkn
-        for wkn, _name in SAMPLE_ASSETS
-    }
-
-    unknown_wkns = [
-        wkn
-        for wkn in selected_wkns
-        if wkn not in available_wkns
-    ]
-
-    if unknown_wkns:
-        raise ValueError(
-            f"No cached sample data for: {', '.join(unknown_wkns)}"
-        )
-
     prices = _load_sample_prices(selected_wkns)
+
+    data_start = prices.index.min().date().isoformat()
+    data_end = prices.index.max().date().isoformat()
 
     returns = prices.pct_change(
         fill_method=None
@@ -121,20 +100,12 @@ def optimize_sample_portfolio(
         weights,
     )
 
-    selected_assets = [
-        (wkn, name)
-        for wkn, name in SAMPLE_ASSETS
-        if wkn in selected_wkns
-    ]
+    asset_names = dict(SAMPLE_ASSETS)
 
-    tickers = [
-        wkn
-        for wkn, _name in selected_assets
-    ]
-
+    tickers = selected_wkns
     names = [
-        name
-        for _wkn, name in selected_assets
+        asset_names[wkn]
+        for wkn in selected_wkns
     ]
 
     annual_returns = {
@@ -153,7 +124,7 @@ def optimize_sample_portfolio(
         .tolist()
     )
 
-    return OptimizationResult(
+    result = OptimizationResult(
         tickers=tickers,
         names=names,
         weights=[
@@ -176,3 +147,13 @@ def optimize_sample_portfolio(
         correlation_matrix=correlation_matrix,
         annual_returns=annual_returns,
     )
+
+    assumptions = {
+        "data_start": data_start,
+        "data_end": data_end,
+        "risk_free_rate": risk_free_rate,
+        "objective": "maximum_sharpe",
+        "constraints": "long_only",
+    }
+
+    return result, assumptions

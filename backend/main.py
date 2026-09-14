@@ -80,13 +80,14 @@ async def optimize_sample(
     request: SampleOptimizationRequest,
 ):
     try:
-        result = optimize_sample_portfolio(
+        result, assumptions = optimize_sample_portfolio(
             selected_wkns=request.wkns,
         )
 
         return {
             "status": "ok",
             "result": asdict(result),
+            "assumptions": assumptions,
         }
 
     except ValueError as exc:

@@ -1,51 +1,62 @@
 # Markowitz Playground
 
-**Explore portfolio optimization with real market data — and the real-world data problems behind it.**
+**Explore portfolio optimization with real market data — and the real-world assumptions behind the model.**
 
 Markowitz Playground is an educational application for exploring Modern Portfolio Theory with real financial instruments.
 
-The basic idea is simple:
+The idea is simple:
 
-1. Select assets.
-2. Retrieve historical market data.
+1. Select real market instruments.
+2. Use historical market data.
 3. Calculate returns, risk and correlations.
 4. Let the Markowitz model derive a model allocation.
-5. Make the result understandable rather than just displaying numbers.
+5. Make both the result and its assumptions transparent.
 
-The project started as a portfolio optimization experiment. While building it, one thing became clear very quickly:
-
-> **The optimization model is not the hardest part. Reliable instrument identification and consistent access to historical market data are.**
-
-That discovery now shapes both the architecture and the MVP.
+The project combines financial modeling with a practical product question: how do you make a mathematically valid model understandable, reproducible and honest about its data limitations?
 
 ---
 
-## Current status
+## Current MVP
 
-**MVP in active development**
+The current application implements a complete vertical slice:
 
-Already implemented:
+`React UI → FastAPI → cached real market data → Markowitz optimization → model allocation`
 
-- React/Vite frontend
-- FastAPI backend
-- WKN-based instrument lookup via OpenFIGI
-- separation between instrument identity and market-data listing
-- Yahoo Finance listing validation
-- structured handling of unavailable or rate-limited market data
-- Markowitz optimization engine
-- efficient-frontier calculation
-- correlation matrix calculation
-- frontend/backend integration
-- centralized UI copy for future localization
+The playground includes eight real sample instruments covering different markets and asset classes:
 
-The current UI already communicates with the backend and distinguishes between:
+- MSCI World
+- Nasdaq-100
+- DAX
+- Emerging Markets
+- World Small Cap
+- Euro Government Bonds
+- Gold
+- EUR Overnight / Money Market
 
-- an unknown instrument
-- an identified instrument for which historical price data cannot be resolved reliably
-- a temporarily unavailable market-data provider
-- internal application errors
+Users can remove assets from the sample selection before running the optimization. The selected assets are sent to the backend and only those assets are included in the calculation.
 
-The next MVP step is to make the optimization experience reproducible independently of third-party API availability.
+The resulting model allocation is displayed directly on the corresponding asset cards.
+
+---
+
+## Model transparency
+
+A Markowitz result is only meaningful in the context of its inputs and assumptions.
+
+The application therefore displays the assumptions alongside every model result:
+
+- historical data period actually used in the calculation
+- risk-free rate
+- optimization objective
+- portfolio constraints
+
+The current sample uses cached historical market data rather than fetching prices every time the model runs.
+
+This keeps the demo reproducible and independent of temporary third-party API availability.
+
+The current optimization objective is **Maximum Sharpe Ratio**, with **long-only allocations** whose weights sum to 100%.
+
+The risk-free rate is currently an explicit model parameter. A future version may use the latest Euro Short-Term Rate (€STR) as its default while keeping the assumption visible and adjustable.
 
 ---
 
@@ -55,7 +66,7 @@ A WKN or ISIN identifies a financial instrument. A market-data provider, however
 
 Those are not necessarily the same thing.
 
-For example, one ETF can:
+One ETF can:
 
 - have one WKN and ISIN,
 - trade on several exchanges,
@@ -68,7 +79,7 @@ This means that a naive pipeline such as
 
 is not reliable enough.
 
-The current architecture therefore separates the problem into distinct responsibilities:
+The architecture therefore separates the responsibilities:
 
 `UI → Asset Resolver → Market Data Provider → Markowitz Engine`
 
@@ -76,41 +87,30 @@ OpenFIGI is used to identify instruments and possible listings. Market-data avai
 
 During development, Yahoo Finance also started rate-limiting repeated requests. The application handles this explicitly instead of incorrectly reporting the instrument as unknown.
 
-This is an important distinction: **an unavailable data source is not the same as unavailable data, and neither means that the financial instrument does not exist.**
+**An unavailable data source is not the same as unavailable data — and neither means that the financial instrument does not exist.**
 
 ---
 
-## MVP data strategy
+## Data strategy
 
 Reliable financial market data is a product dependency, not merely an implementation detail.
 
-Free market-data sources are useful for experimentation but cannot necessarily provide the reliability expected from a production application.
+For the current MVP, a curated set of real instruments is backed by cached historical market data. The sample cache can be refreshed deliberately rather than making the core optimization experience dependent on an external provider on every run.
 
-For the MVP, the planned approach is therefore hybrid:
+Marketstack is currently used to refresh the cached sample dataset.
 
-### Reproducible demo dataset
-
-A curated set of real instruments with cached historical data will provide a stable path through the complete optimization experience.
-
-This makes the educational model reproducible and keeps the core experience independent of external rate limits.
-
-### External asset lookup
-
-Lookup of additional real instruments can remain available where third-party data sources allow it.
-
-Failures are surfaced transparently rather than silently substituted or interpreted as missing instruments.
-
-### Production perspective
+A separate asset-resolution path allows additional instruments to be identified via WKN or ISIN. Full integration of arbitrary user-selected assets into the optimization pipeline is still a future step.
 
 A production-grade version would require a deliberate market-data strategy, potentially including:
 
-- a commercial data provider
-- caching
+- commercial or higher-reliability data sources
+- adjusted or total-return price series
+- caching and scheduled refreshes
 - provider fallbacks
 - stronger listing resolution
 - data-quality monitoring
 
-The MVP deliberately does not hide this boundary.
+The MVP deliberately makes this boundary visible rather than hiding it.
 
 ---
 
@@ -126,9 +126,13 @@ The optimization engine uses historical asset returns to estimate:
 - model portfolio weights
 - efficient-frontier portfolios
 
-The current optimizer uses long-only allocations whose weights sum to 100%.
+The optimizer currently searches for the long-only portfolio with the maximum Sharpe ratio.
 
-The results are intended to demonstrate the mechanics and implications of Modern Portfolio Theory — **not to recommend investments.**
+This also demonstrates an important property of portfolio optimization: **Markowitz results can be highly sensitive to the observation period, expected-return estimates and other model assumptions.**
+
+A mathematically optimal result under a particular set of historical inputs is not automatically a sensible prediction of future returns.
+
+The results are therefore presented as **model allocations, not investment recommendations**.
 
 ---
 
@@ -151,10 +155,11 @@ The results are intended to demonstrate the mechanics and implications of Modern
 - httpx
 - yfinance
 
-### Data / instrument resolution
+### Data and instrument resolution
 
 - OpenFIGI
-- Yahoo Finance market data
+- Marketstack
+- Yahoo Finance
 
 The external data-provider layer is intentionally separated from the optimization logic so that providers can be replaced or extended later.
 
@@ -165,14 +170,20 @@ The external data-provider layer is intentionally separated from the optimizatio
 ```text
 markowitz-app/
 ├── backend/
+│   ├── data/
+│   │   └── sample_prices/
 │   ├── asset_resolver.py
 │   ├── main.py
 │   ├── markowitz.py
 │   ├── price_data.py
 │   ├── requirements.txt
+│   ├── sample_portfolio.py
 │   ├── test_resolver.py
+│   ├── test_sample_markowitz.py
 │   └── wkn_lookup.py
 ├── scripts/
+│   ├── analyze_sample_assets.py
+│   └── update-sample-data.mjs
 ├── src/
 │   ├── locales/
 │   │   └── en.js
@@ -181,3 +192,33 @@ markowitz-app/
 │   ├── index.css
 │   └── main.jsx
 └── README.md
+```
+
+---
+
+## Roadmap
+
+Next steps include:
+
+- expose the cache refresh date alongside the historical data period
+- use €STR as a transparent default risk-free rate
+- integrate custom resolved assets into the optimization pipeline
+- visualize the efficient frontier
+- improve historical return methodology, including adjusted / total-return data
+- expand educational explanations of diversification, risk and correlation
+
+---
+
+## Disclaimer
+
+**For educational purposes only — not investment advice.**
+
+The application demonstrates portfolio-optimization concepts using historical market data and simplified model assumptions. Historical results and model allocations should not be interpreted as predictions or recommendations.
+
+---
+
+## AI-assisted development
+
+Product concept, architecture and implementation were developed with support from generative AI.
+
+The resulting code and product decisions were reviewed during development, but errors may remain.

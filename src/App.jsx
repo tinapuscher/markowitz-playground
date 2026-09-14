@@ -78,6 +78,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorCode, setErrorCode] = useState(null);
   const [optimizationResult, setOptimizationResult] = useState(null);
+  const [optimizationAssumptions, setOptimizationAssumptions] = useState(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
   const text = en;
@@ -143,6 +144,7 @@ function App() {
 
   setIsOptimizing(true);
   setOptimizationResult(null);
+  setOptimizationAssumptions(null);
   setErrorCode(null);
 
   try {
@@ -167,6 +169,7 @@ function App() {
     }
 
     setOptimizationResult(data.result);
+    setOptimizationAssumptions(data.assumptions);
   } catch {
     setErrorCode("OPTIMIZATION_FAILED");
   } finally {
@@ -267,6 +270,39 @@ function App() {
               </strong>
             </div>
           </div>
+
+          {optimizationAssumptions && (
+            <div className="model-assumptions">
+              <div>
+                <span>DATA</span>
+                <strong>
+                  Cached historical market data
+                </strong>
+                <small>
+                  {optimizationAssumptions.data_start}
+                  {" – "}
+                  {optimizationAssumptions.data_end}
+                </small>
+              </div>
+
+              <div>
+                <span>RISK-FREE RATE</span>
+                <strong>
+                  {(optimizationAssumptions.risk_free_rate * 100).toFixed(2)}%
+                </strong>
+              </div>
+
+              <div>
+                <span>OBJECTIVE</span>
+                <strong>Maximum Sharpe ratio</strong>
+              </div>
+
+              <div>
+                <span>CONSTRAINTS</span>
+                <strong>Long-only</strong>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
