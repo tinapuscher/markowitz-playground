@@ -82,6 +82,9 @@ function App() {
   const [isOptimizing, setIsOptimizing] = useState(false);
 
   const text = en;
+  const eligibleAssets = assets.filter(
+    (asset) => asset.isSample || asset.in_sample_cache
+  );
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -124,7 +127,7 @@ function App() {
           ...currentAssets,
           {
             ...data.asset,
-            isSample: false,
+            isSample: Boolean(data.asset.in_sample_cache),
           },
         ]);
       }
@@ -138,7 +141,7 @@ function App() {
   }
 
   async function handleOptimize() {
-  if (assets.length < 2 || isOptimizing) {
+  if (eligibleAssets.length < 2 || isOptimizing) {
     return;
   }
 
@@ -156,7 +159,7 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          wkns: assets.map((asset) => asset.wkn),
+          wkns: eligibleAssets.map((asset) => asset.wkn),
         }),
       }
     );
@@ -228,7 +231,7 @@ function App() {
           className="optimize-button"
           type="button"
           onClick={handleOptimize}
-          disabled={assets.length < 2 || isOptimizing}
+          disabled={eligibleAssets.length < 2 || isOptimizing}
         >
           {isOptimizing
             ? "Running model..."
@@ -327,6 +330,12 @@ function App() {
                       {asset.type || "ETF"}
                     </span>
 
+                    {!(asset.isSample || asset.in_sample_cache) && (
+                      <span className="asset-ineligible">
+                        {text.assets.ineligibleBadge}
+                      </span>
+                    )}
+
                     {optimizationResult && (() => {
                       const resultIndex =
                         optimizationResult.tickers.indexOf(asset.wkn);
@@ -357,8 +366,10 @@ function App() {
                     WKN {asset.wkn}
                     {asset.isin && ` · ISIN ${asset.isin}`}
                     {!asset.isin &&
-                      asset.yahoo_symbol &&
-                      ` · ${asset.yahoo_symbol}`}
+                      asset.source_ticker &&
+                      ` · ${asset.source_ticker}${
+                        asset.exchange ? ` (${asset.exchange})` : ""
+                      }`}
                   </p>
                 </div>
 

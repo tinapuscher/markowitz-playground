@@ -33,9 +33,9 @@ The playground includes eight real sample instruments covering different markets
 - Gold
 - EUR Overnight / Money Market
 
-Users can remove assets from the sample selection before running the optimization. The selected assets are sent to the backend and only those assets are included in the calculation.
+Users can remove assets from the sample selection before running the optimization. Additional instruments can be identified by WKN and added to the list, but only cached sample assets are included in the calculation.
 
-The resulting model allocation is displayed directly on the corresponding asset cards.
+The resulting model allocation is displayed directly on the corresponding sample asset cards.
 
 ---
 
@@ -81,11 +81,11 @@ is not reliable enough.
 
 The architecture therefore separates the responsibilities:
 
-`UI → Asset Resolver → Market Data Provider → Markowitz Engine`
+`UI → Asset Resolver → cached sample market data → Markowitz Engine`
 
-OpenFIGI is used to identify instruments and possible listings. Market-data availability is validated separately.
+OpenFIGI is used to identify instruments and possible listings. Whether an identified instrument can currently be optimized is a separate question: for this MVP, that boundary is the eight-instrument cached sample universe, not a live market-data lookup.
 
-During development, Yahoo Finance also started rate-limiting repeated requests. The application handles this explicitly instead of incorrectly reporting the instrument as unknown.
+If the identification provider is unavailable, the application reports that as a temporary lookup failure instead of treating the instrument as unknown.
 
 **An unavailable data source is not the same as unavailable data — and neither means that the financial instrument does not exist.**
 
@@ -99,7 +99,7 @@ For the current MVP, a curated set of real instruments is backed by cached histo
 
 Marketstack is currently used to refresh the cached sample dataset.
 
-A separate asset-resolution path allows additional instruments to be identified via WKN or ISIN. Full integration of arbitrary user-selected assets into the optimization pipeline is still a future step.
+A separate asset-resolution path allows additional instruments to be identified via WKN. Identified custom assets can be added to the playground, but they are marked as not currently included in the cached model. Full integration of arbitrary user-selected assets into the optimization pipeline is still a future step.
 
 A production-grade version would require a deliberate market-data strategy, potentially including:
 
@@ -157,9 +157,10 @@ The results are therefore presented as **model allocations, not investment recom
 
 ### Data and instrument resolution
 
-- OpenFIGI
-- Marketstack
-- Yahoo Finance
+- OpenFIGI (instrument identity)
+- Marketstack (refresh of the cached sample dataset)
+
+An unused live price-fetch path still exists in `price_data.py` (Yahoo Chart API / yfinance). It is not used by Add Asset or by sample optimization.
 
 The external data-provider layer is intentionally separated from the optimization logic so that providers can be replaced or extended later.
 

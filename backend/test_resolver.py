@@ -20,9 +20,10 @@ async def main() -> None:
 
             print(
                 f"{wkn} -> "
-                f"{asset.yahoo_symbol} | "
+                f"{asset.source_ticker} | "
+                f"{asset.exchange} | "
                 f"{asset.name} | "
-                f"{asset.exchange}"
+                f"in_sample_cache={asset.in_sample_cache}"
             )
         except Exception as exc:
             print(f"{wkn} -> ERROR: {exc}")

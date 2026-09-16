@@ -18,12 +18,16 @@ export const en = {
   samples: {
   title: "Sample assets for exploration",
   description:
-    "This sample selection includes commonly used instruments representing markets and asset classes often found in investment portfolios. It is provided solely to explore how the Markowitz model works and does not represent a recommended portfolio or investment advice.",
+    "The Markowitz model currently uses only this cached sample universe. Additional instruments can be identified by WKN and added to the list, but they are not included in the optimization until they are part of the sample cache.",
+  },
+
+  assets: {
+    ineligibleBadge: "Identified · not in sample cache",
   },
 
   assetInput: {
   label: "Add an asset",
-  placeholder: "Enter WKN or ISIN",
+  placeholder: "Enter WKN",
   button: "Add asset",
   loading: "Looking up...",
   counter: "assets",
@@ -47,16 +51,22 @@ export const en = {
         "We could not identify an asset with this identifier.",
     },
 
-    PRICE_DATA_UNAVAILABLE: {
-      title: "Historical price data unavailable",
+    IDENTIFICATION_PROVIDER_UNAVAILABLE: {
+      title: "Instrument lookup temporarily unavailable",
       message:
-        "The asset was identified, but could not be reliably matched to historical price data from Yahoo Finance.",
+        "OpenFIGI could not be reached. Please try again later.",
     },
 
-    MARKET_DATA_PROVIDER_UNAVAILABLE: {
-      title: "Market data temporarily unavailable",
+    INVALID_SAMPLE_SELECTION: {
+      title: "Selection cannot be optimized",
       message:
-        "Yahoo Finance is currently limiting data requests. Please try again later.",
+        "The model currently runs only on the cached sample assets. Remove unidentified or non-sample instruments from the request, and keep at least two sample assets.",
+    },
+
+    OPTIMIZATION_FAILED: {
+      title: "Optimization failed",
+      message:
+        "The model could not be run for this selection.",
     },
 
     INTERNAL_ERROR: {

@@ -24,6 +24,8 @@ SAMPLE_ASSETS = [
     ("DBX0AN", "EUR Overnight"),
 ]
 
+SAMPLE_WKNS = frozenset(wkn for wkn, _name in SAMPLE_ASSETS)
+
 DATA_DIR = Path(__file__).parent / "data" / "sample_prices"
 
 
@@ -59,6 +61,19 @@ def optimize_sample_portfolio(
     selected_wkns: list[str],
     risk_free_rate: float = 0.02,
 ) -> OptimizationResult:
+    unknown = [wkn for wkn in selected_wkns if wkn not in SAMPLE_WKNS]
+
+    if unknown:
+        raise ValueError(
+            "Selected assets are not in the cached sample universe: "
+            + ", ".join(unknown)
+        )
+
+    if len(selected_wkns) < 2:
+        raise ValueError(
+            "At least two cached sample assets are required."
+        )
+
     prices = _load_sample_prices(selected_wkns)
 
     data_start = prices.index.min().date().isoformat()

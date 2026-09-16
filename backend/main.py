@@ -54,7 +54,7 @@ async def resolve(identifier: str):
 
     except ResolverError as exc:
         status_code = 503 if (
-            exc.code == "MARKET_DATA_PROVIDER_UNAVAILABLE"
+            exc.code == "IDENTIFICATION_PROVIDER_UNAVAILABLE"
         ) else 422
 
         return JSONResponse(
