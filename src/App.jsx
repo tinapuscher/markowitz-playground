@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { en } from "./locales/en";
+import EfficientFrontierChart from "./components/EfficientFrontierChart";
 import "./App.css";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -273,6 +274,14 @@ function App() {
               </strong>
             </div>
           </div>
+
+          {optimizationResult.efficient_frontier && (
+            <EfficientFrontierChart
+              efficientFrontier={optimizationResult.efficient_frontier}
+              expectedReturn={optimizationResult.expected_return}
+              volatility={optimizationResult.volatility}
+            />
+          )}
 
           {optimizationAssumptions && (
             <div className="model-assumptions">

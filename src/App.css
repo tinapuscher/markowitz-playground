@@ -657,3 +657,65 @@ footer {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.efficient-frontier-chart {
+  margin: 28px 0;
+  padding: 20px;
+  border: 1px solid #dce1dd;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.chart-label {
+  margin: 0 0 16px;
+  color: #1f6f68;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e7ebe8;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #68716e;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1f6f68;
+}
+
+.optimal-dot {
+  background: #1f6f68;
+  border: 2px solid #17201f;
+}
+
+.frontier-dot {
+  opacity: 0.6;
+}
+
+@media (max-width: 700px) {
+  .efficient-frontier-chart {
+    padding: 16px;
+  }
+
+  .chart-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+}
