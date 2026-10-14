@@ -153,14 +153,11 @@ The results are therefore presented as **model allocations, not investment recom
 - pandas
 - SciPy
 - httpx
-- yfinance
 
 ### Data and instrument resolution
 
 - OpenFIGI (instrument identity)
 - Marketstack (refresh of the cached sample dataset)
-
-An unused live price-fetch path still exists in `price_data.py` (Yahoo Chart API / yfinance). It is not used by Add Asset or by sample optimization.
 
 The external data-provider layer is intentionally separated from the optimization logic so that providers can be replaced or extended later.
 
@@ -176,7 +173,6 @@ markowitz-app/
 │   ├── asset_resolver.py
 │   ├── main.py
 │   ├── markowitz.py
-│   ├── price_data.py
 │   ├── requirements.txt
 │   ├── sample_portfolio.py
 │   ├── test_resolver.py

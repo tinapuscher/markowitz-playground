@@ -1,14 +1,11 @@
-"""Mean-variance (Markowitz) portfolio optimization."""
+"""Mean-variance (Markowitz) portfolio optimization utilities."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 import numpy as np
-import pandas as pd
 from scipy.optimize import minimize
-
-from price_data import fetch_prices
 
 
 @dataclass
@@ -22,21 +19,6 @@ class OptimizationResult:
     efficient_frontier: list[dict[str, float]]
     correlation_matrix: list[list[float]]
     annual_returns: dict[str, float]
-
-
-def _fetch_returns(tickers: list[str], period: str = "3y") -> pd.DataFrame:
-    prices = fetch_prices(tickers, period=period)
-    returns = prices.pct_change().dropna()
-    if returns.shape[1] < 2 and len(tickers) > 1:
-        raise ValueError("Kursdaten für mehrere Assets konnten nicht abgeglichen werden.")
-
-    # Drop assets with too many missing values
-    missing_frac = returns.isna().mean()
-    valid = missing_frac[missing_frac < 0.1].index.tolist()
-    if len(valid) < 2:
-        raise ValueError("Zu viele fehlende Werte in den Kursreihen.")
-    returns = returns[valid].dropna()
-    return returns
 
 
 def _annualize(mu: np.ndarray, cov: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -128,46 +110,3 @@ def _efficient_frontier(
                 }
             )
     return frontier
-
-
-def optimize_portfolio(
-    tickers: list[str],
-    names: list[str],
-    risk_free_rate: float = 0.02,
-    period: str = "3y",
-) -> OptimizationResult:
-    if len(tickers) < 2:
-        raise ValueError("Mindestens zwei Assets für eine Portfolio-Optimierung nötig.")
-
-    returns = _fetch_returns(tickers, period=period)
-    used_tickers = list(returns.columns)
-    used_names = [
-        names[tickers.index(t)] if t in tickers else t for t in used_tickers
-    ]
-
-    mu_daily = returns.mean().values
-    cov_daily = returns.cov().values
-    mu, cov = _annualize(mu_daily, cov_daily)
-
-    weights = _max_sharpe(mu, cov, risk_free_rate)
-    exp_ret, vol = _portfolio_stats(weights, mu, cov)
-    sharpe = (exp_ret - risk_free_rate) / vol if vol > 0 else 0.0
-
-    corr = returns.corr().values.tolist()
-    annual_ret = {
-        t: round(float(returns[t].mean() * 252 * 100), 2) for t in used_tickers
-    }
-
-    frontier = _efficient_frontier(mu, cov, weights)
-
-    return OptimizationResult(
-        tickers=used_tickers,
-        names=used_names,
-        weights=[round(float(w), 4) for w in weights],
-        expected_return=round(exp_ret * 100, 2),
-        volatility=round(vol * 100, 2),
-        sharpe_ratio=round(float(sharpe), 3),
-        efficient_frontier=frontier,
-        correlation_matrix=[[round(c, 3) for c in row] for row in corr],
-        annual_returns=annual_ret,
-    )
