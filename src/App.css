@@ -387,6 +387,32 @@ input {
   cursor: not-allowed;
 }
 
+.recalculate-button {
+  width: auto;
+  min-height: 44px;
+  margin: 16px 0 12px;
+  margin-left: auto;
+  padding: 0 24px;
+  border: 1px solid #1f6f68;
+  border-radius: 10px;
+  color: #1f6f68;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.recalculate-button:hover:not(:disabled) {
+  background: #f4f6f4;
+}
+
+.recalculate-button:disabled {
+  color: #9ca4a1;
+  border-color: #dce1dd;
+  background: #f9faf9;
+  cursor: not-allowed;
+}
+
 footer {
   padding: 28px 0 40px;
   color: #8a9290;
@@ -435,6 +461,11 @@ footer {
 
   .asset-form button {
     min-height: 46px;
+  }
+
+  .recalculate-button {
+    width: 100%;
+    margin-left: 0;
   }
 
   .asset-row {

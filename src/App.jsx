@@ -252,7 +252,7 @@ function App() {
           disabled={eligibleAssets.length < 2 || isOptimizing}
         >
           {isOptimizing
-            ? "Running model..."
+            ? "Calculating…"
             : text.actions.optimize}
         </button>
 
@@ -435,6 +435,17 @@ function App() {
               : text.assetInput.button}
           </button>
         </form>
+
+        <button
+          className="recalculate-button"
+          type="button"
+          onClick={handleOptimize}
+          disabled={eligibleAssets.length < 2 || isOptimizing}
+        >
+          {isOptimizing
+            ? "Calculating…"
+            : "Recalculate model"}
+        </button>
 
         <div className="sample-note">
           <strong>{text.samples.title}</strong>
