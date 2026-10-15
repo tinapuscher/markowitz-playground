@@ -6,6 +6,9 @@ import "./App.css";
 const API_BASE_URL = "http://127.0.0.1:8000";
 const MAX_ASSETS = 20;
 
+// Custom assets with supported Marketstack mappings
+const OPTIMIZABLE_CUSTOM_WKNS = ["A113FM"];
+
 const SAMPLE_ASSETS = [
   {
     name: "iShares Core MSCI World UCITS ETF USD (Acc)",
@@ -84,7 +87,10 @@ function App() {
 
   const text = en;
   const eligibleAssets = assets.filter(
-    (asset) => asset.isSample || asset.in_sample_cache
+    (asset) =>
+      asset.isSample ||
+      asset.in_sample_cache ||
+      OPTIMIZABLE_CUSTOM_WKNS.includes(asset.wkn)
   );
 
   async function handleSubmit(event) {
