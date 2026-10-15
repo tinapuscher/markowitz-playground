@@ -152,18 +152,29 @@ function App() {
   setErrorCode(null);
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/optimize/sample`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          wkns: eligibleAssets.map((asset) => asset.wkn),
-        }),
-      }
+    // Check if any custom assets are selected
+    const hasCustomAssets = eligibleAssets.some(
+      (asset) => !asset.isSample && !asset.in_sample_cache
     );
+
+    const wkns = eligibleAssets.map((asset) => asset.wkn);
+    const names = eligibleAssets.map((asset) => asset.exposure || asset.name);
+
+    const endpoint = hasCustomAssets
+      ? `${API_BASE_URL}/api/optimize/mixed`
+      : `${API_BASE_URL}/api/optimize/sample`;
+
+    const body = hasCustomAssets
+      ? { wkns, names }
+      : { wkns };
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
     const data = await response.json();
 

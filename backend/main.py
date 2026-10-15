@@ -10,11 +10,19 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from asset_resolver import ResolverError, resolve_asset
-from sample_portfolio import optimize_sample_portfolio
+from sample_portfolio import (
+    optimize_sample_portfolio,
+    optimize_mixed_portfolio,
+)
 
 
 class SampleOptimizationRequest(BaseModel):
     wkns: list[str]
+
+
+class MixedOptimizationRequest(BaseModel):
+    wkns: list[str]
+    names: list[str]
 
 
 app = FastAPI(
@@ -96,6 +104,42 @@ async def optimize_sample(
             content={
                 "status": "error",
                 "code": "INVALID_SAMPLE_SELECTION",
+                "message": str(exc),
+            },
+        )
+
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "code": "OPTIMIZATION_FAILED",
+            },
+        )
+
+
+@app.post("/api/optimize/mixed")
+async def optimize_mixed(
+    request: MixedOptimizationRequest,
+):
+    try:
+        result, assumptions = await optimize_mixed_portfolio(
+            selected_wkns=request.wkns,
+            selected_names=request.names,
+        )
+
+        return {
+            "status": "ok",
+            "result": asdict(result),
+            "assumptions": assumptions,
+        }
+
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "status": "error",
+                "code": "INVALID_MIXED_SELECTION",
                 "message": str(exc),
             },
         )
